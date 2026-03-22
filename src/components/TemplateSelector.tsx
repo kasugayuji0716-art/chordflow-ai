@@ -15,7 +15,7 @@ export function TemplateSelector({ onSelect, onClose }: Props) {
     const firstSection = t.sections[0].name;
     const chords = t.chords[firstSection] ?? [];
     chords.slice(0, 4).forEach((chord, i) => {
-      setTimeout(() => playChord(chord, 0.6), i * 700);
+      setTimeout(() => playChord(chord), i * 700);
     });
   };
 

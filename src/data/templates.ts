@@ -7,7 +7,6 @@ export interface SongTemplate {
   emoji: string;
   settings: SongSettings;
   sections: { name: string; measures: number; color: string }[];
-  tensionShape: 'rising' | 'wave' | 'climax' | 'flat';
   chords: Record<string, string[]>; // section name → chord array
 }
 
@@ -24,7 +23,6 @@ export const TEMPLATES: SongTemplate[] = [
       { name: 'Bメロ',   measures: 4, color: '#f59e0b' },
       { name: 'サビ',    measures: 8, color: '#ec4899' },
     ],
-    tensionShape: 'climax',
     chords: {
       'イントロ': ['Cmaj7', 'Am7', 'Fmaj7', 'G7'],
       'Aメロ':   ['Cmaj7', 'Am7', 'Fmaj7', 'G7', 'Em7', 'Am7', 'Dm7', 'G7'],
@@ -44,7 +42,6 @@ export const TEMPLATES: SongTemplate[] = [
       { name: 'サビ',    measures: 8, color: '#ec4899' },
       { name: 'アウトロ', measures: 4, color: '#8b5cf6' },
     ],
-    tensionShape: 'wave',
     chords: {
       'イントロ': ['Gmaj7', 'Em7', 'Cmaj7', 'D7'],
       'Aメロ':   ['Gmaj7', 'Em7', 'Cmaj7', 'D7', 'Bm7', 'Em7', 'Am7', 'D7'],
@@ -64,7 +61,6 @@ export const TEMPLATES: SongTemplate[] = [
       { name: 'B',  measures: 8, color: '#10b981' },
       { name: 'A3', measures: 8, color: '#f59e0b' },
     ],
-    tensionShape: 'flat',
     chords: {
       'A':  ['Cmaj7', 'Am7', 'Dm7', 'G7', 'Em7', 'A7', 'Dm7', 'G7'],
       'A2': ['Cmaj7', 'Am7', 'Dm7', 'G7', 'Em7', 'A7', 'Dm7', 'G7'],
@@ -84,7 +80,6 @@ export const TEMPLATES: SongTemplate[] = [
       { name: 'サビ',    measures: 8, color: '#f43f5e' },
       { name: 'ブリッジ', measures: 4, color: '#10b981' },
     ],
-    tensionShape: 'rising',
     chords: {
       'イントロ': ['Am', 'G', 'F', 'E'],
       'Aメロ':   ['Am', 'G', 'F', 'E', 'Am', 'G', 'F', 'E7'],
@@ -104,7 +99,6 @@ export const TEMPLATES: SongTemplate[] = [
       { name: 'ブレイク',   measures: 4, color: '#22d3ee' },
       { name: 'ドロップ2',  measures: 8, color: '#f43f5e' },
     ],
-    tensionShape: 'climax',
     chords: {
       'ビルドアップ': ['Am', 'F', 'C', 'G', 'Am', 'F', 'C', 'E'],
       'ドロップ':   ['Am', 'F', 'C', 'G', 'Am', 'F', 'C', 'G'],

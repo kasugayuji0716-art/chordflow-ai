@@ -1,15 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { SectionList, createSection } from './components/SectionList';
-import { TensionCurve } from './components/TensionCurve';
 import { ChordViewer } from './components/ChordViewer';
 import { ExportPanel } from './components/ExportPanel';
 import { MusicPanel } from './components/MusicPanel';
 import { TemplateSelector } from './components/TemplateSelector';
 import { generateChords } from './api/claudeApi';
-import type { Section, SectionChords, SongSettings, TensionPoint } from './types';
+import type { Section, SectionChords, SongSettings } from './types';
 import type { SongTemplate } from './data/templates';
-import { PRESETS } from './components/TensionCurve';
 import './index.css';
 
 const DEFAULT_SETTINGS: SongSettings = {
@@ -42,15 +40,6 @@ function buildDefaultChords(sections: Section[]): SectionChords[] {
   }));
 }
 
-function defaultTensionPoints(total: number): TensionPoint[] {
-  return [
-    { measureIndex: 0, tension: 3 },
-    { measureIndex: total * 0.5, tension: 5 },
-    { measureIndex: total * 0.75, tension: 8.5 },
-    { measureIndex: total, tension: 6 },
-  ];
-}
-
 export default function App() {
   const [settings, setSettings] = useState<SongSettings>(DEFAULT_SETTINGS);
   const [sections, setSections] = useState<Section[]>(DEFAULT_SECTIONS);
@@ -62,22 +51,10 @@ export default function App() {
 
   const totalMeasures = sections.reduce((s, sec) => s + sec.measures, 0);
 
-  const [tensionPoints, setTensionPoints] = useState<TensionPoint[]>(() =>
-    defaultTensionPoints(DEFAULT_SECTIONS.reduce((s, sec) => s + sec.measures, 0))
-  );
-
   const handleSectionsChange = useCallback((newSections: Section[]) => {
-    const newTotal = newSections.reduce((s, sec) => s + sec.measures, 0);
-    const oldTotal = sections.reduce((s, sec) => s + sec.measures, 0);
-    if (newTotal !== oldTotal && newTotal > 0) {
-      setTensionPoints(pts =>
-        pts.map(p => ({ ...p, measureIndex: (p.measureIndex / oldTotal) * newTotal }))
-      );
-    }
     setSections(newSections);
-  }, [sections]);
+  }, []);
 
-  /** テンプレートを適用する */
   const handleTemplateSelect = (t: SongTemplate) => {
     const newSections: Section[] = t.sections.map(s => ({
       id: `s_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -85,11 +62,8 @@ export default function App() {
       measures: s.measures,
       color: s.color,
     }));
-    const newTotal = newSections.reduce((s, sec) => s + sec.measures, 0);
-
     setSettings(t.settings);
     setSections(newSections);
-    setTensionPoints(PRESETS[t.tensionShape](newTotal));
     setChordData(newSections.map(sec => ({
       sectionId: sec.id,
       patterns: (t.chords[sec.name] ?? [])
@@ -108,7 +82,7 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const result = await generateChords({ settings, sections, tensionPoints });
+      const result = await generateChords({ settings, sections });
       setChordData(result.sectionChords);
       setExplanation(result.explanation);
     } catch (e) {
@@ -122,8 +96,7 @@ export default function App() {
     setChordData(prev =>
       prev.map(sec => {
         if (sec.sectionId !== sectionId) return sec;
-        const patterns = sec.patterns.map(p => p.index === measureIdx ? { ...p, chord } : p);
-        return { ...sec, patterns };
+        return { ...sec, patterns: sec.patterns.map(p => p.index === measureIdx ? { ...p, chord } : p) };
       })
     );
   };
@@ -133,7 +106,6 @@ export default function App() {
       <Header settings={settings} onChange={setSettings} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left: Section list */}
         <SectionList
           sections={sections}
           totalMeasures={totalMeasures}
@@ -141,17 +113,8 @@ export default function App() {
           onOpenTemplates={() => setShowTemplates(true)}
         />
 
-        {/* Right: Main area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Tension curve */}
-          <TensionCurve
-            sections={sections}
-            totalMeasures={totalMeasures}
-            tensionPoints={tensionPoints}
-            onChange={setTensionPoints}
-          />
-
-          {/* Generate button + explanation */}
+          {/* AI提案バー */}
           <div className="px-4 py-3 bg-slate-900 border-b border-slate-700 flex items-center gap-4">
             <button
               onClick={handleGenerate}
@@ -186,7 +149,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Chord viewer */}
+          {/* コードビューア */}
           <div className="flex-1 overflow-auto flex flex-col">
             <ChordViewer
               sections={sections}
@@ -196,17 +159,14 @@ export default function App() {
             />
           </div>
 
-          {/* Music generation */}
           {chordData.length > 0 && (
             <MusicPanel settings={settings} sections={sections} chordData={chordData} />
           )}
 
-          {/* Export */}
           <ExportPanel settings={settings} sections={sections} chordData={chordData} />
         </div>
       </div>
 
-      {/* Template modal */}
       {showTemplates && (
         <TemplateSelector
           onSelect={handleTemplateSelect}
