@@ -8,7 +8,7 @@ interface Props {
   onChange: (points: TensionPoint[]) => void;
 }
 
-const PRESETS = {
+export const PRESETS = {
   flat: (total: number) => [
     { measureIndex: 0, tension: 5 },
     { measureIndex: total, tension: 5 },

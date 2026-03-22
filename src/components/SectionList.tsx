@@ -37,9 +37,10 @@ interface Props {
   sections: Section[];
   totalMeasures: number;
   onChange: (sections: Section[]) => void;
+  onOpenTemplates: () => void;
 }
 
-export function SectionList({ sections, totalMeasures, onChange }: Props) {
+export function SectionList({ sections, totalMeasures, onChange, onOpenTemplates }: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -75,12 +76,19 @@ export function SectionList({ sections, totalMeasures, onChange }: Props) {
   return (
     <div className="bg-slate-900 border-r border-slate-700 flex flex-col h-full" style={{ width: 260, minWidth: 260 }}>
       <div className="px-4 py-3 border-b border-slate-700">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">楽曲構成</h2>
           <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded font-mono">
             {totalMeasures} 小節
           </span>
         </div>
+        <button
+          onClick={onOpenTemplates}
+          className="w-full text-xs py-1.5 rounded-lg bg-violet-950/50 border border-violet-800/50
+            text-violet-400 hover:bg-violet-900/50 hover:text-violet-300 transition-all"
+        >
+          🎵 テンプレートから選ぶ
+        </button>
       </div>
 
       {/* Section list */}

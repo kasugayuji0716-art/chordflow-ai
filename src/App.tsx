@@ -5,8 +5,11 @@ import { TensionCurve } from './components/TensionCurve';
 import { ChordViewer } from './components/ChordViewer';
 import { ExportPanel } from './components/ExportPanel';
 import { MusicPanel } from './components/MusicPanel';
+import { TemplateSelector } from './components/TemplateSelector';
 import { generateChords } from './api/claudeApi';
 import type { Section, SectionChords, SongSettings, TensionPoint } from './types';
+import type { SongTemplate } from './data/templates';
+import { PRESETS } from './components/TensionCurve';
 import './index.css';
 
 const DEFAULT_SETTINGS: SongSettings = {
@@ -26,10 +29,10 @@ const DEFAULT_SECTIONS: Section[] = [
 
 function buildDefaultChords(sections: Section[]): SectionChords[] {
   const progressions: string[][] = [
-    ['Cmaj7', 'Am7', 'Fmaj7', 'G7'],                                           // イントロ (4)
-    ['Cmaj7', 'Am7', 'Fmaj7', 'G7', 'Em7', 'Am7', 'Dm7', 'G7'],               // Aメロ (8)
-    ['Am7', 'Em7', 'Fmaj7', 'G7'],                                             // Bメロ (4)
-    ['Cmaj7', 'Am7', 'Fmaj7', 'G7', 'Em7', 'Am7', 'Dm7', 'G7sus4'],          // サビ (8)
+    ['Cmaj7', 'Am7', 'Fmaj7', 'G7'],
+    ['Cmaj7', 'Am7', 'Fmaj7', 'G7', 'Em7', 'Am7', 'Dm7', 'G7'],
+    ['Am7', 'Em7', 'Fmaj7', 'G7'],
+    ['Cmaj7', 'Am7', 'Fmaj7', 'G7', 'Em7', 'Am7', 'Dm7', 'G7sus4'],
   ];
   return sections.map((sec, i) => ({
     sectionId: sec.id,
@@ -55,6 +58,7 @@ export default function App() {
   const [explanation, setExplanation] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const totalMeasures = sections.reduce((s, sec) => s + sec.measures, 0);
 
@@ -62,18 +66,39 @@ export default function App() {
     defaultTensionPoints(DEFAULT_SECTIONS.reduce((s, sec) => s + sec.measures, 0))
   );
 
-  // When sections change, adjust tension points if total measures changed
   const handleSectionsChange = useCallback((newSections: Section[]) => {
     const newTotal = newSections.reduce((s, sec) => s + sec.measures, 0);
     const oldTotal = sections.reduce((s, sec) => s + sec.measures, 0);
     if (newTotal !== oldTotal && newTotal > 0) {
-      // Scale tension points proportionally
       setTensionPoints(pts =>
         pts.map(p => ({ ...p, measureIndex: (p.measureIndex / oldTotal) * newTotal }))
       );
     }
     setSections(newSections);
   }, [sections]);
+
+  /** テンプレートを適用する */
+  const handleTemplateSelect = (t: SongTemplate) => {
+    const newSections: Section[] = t.sections.map(s => ({
+      id: `s_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      name: s.name,
+      measures: s.measures,
+      color: s.color,
+    }));
+    const newTotal = newSections.reduce((s, sec) => s + sec.measures, 0);
+
+    setSettings(t.settings);
+    setSections(newSections);
+    setTensionPoints(PRESETS[t.tensionShape](newTotal));
+    setChordData(newSections.map(sec => ({
+      sectionId: sec.id,
+      patterns: (t.chords[sec.name] ?? [])
+        .slice(0, sec.measures)
+        .map((chord, index) => ({ index, chord })),
+    })));
+    setExplanation('');
+    setError('');
+  };
 
   const handleGenerate = async () => {
     if (sections.length === 0) {
@@ -113,6 +138,7 @@ export default function App() {
           sections={sections}
           totalMeasures={totalMeasures}
           onChange={handleSectionsChange}
+          onOpenTemplates={() => setShowTemplates(true)}
         />
 
         {/* Right: Main area */}
@@ -143,10 +169,7 @@ export default function App() {
                   AI が考え中...
                 </>
               ) : (
-                <>
-                  <span>✦</span>
-                  AIにコード進行を提案させる
-                </>
+                <><span>✦</span> AIにコード進行を提案させる</>
               )}
             </button>
 
@@ -155,7 +178,6 @@ export default function App() {
                 {error}
               </div>
             )}
-
             {explanation && !error && (
               <div className="text-xs text-slate-400 flex-1 leading-relaxed">
                 <span className="text-violet-400 font-semibold">AI解説: </span>
@@ -169,6 +191,7 @@ export default function App() {
             <ChordViewer
               sections={sections}
               chordData={chordData}
+              settings={settings}
               onChordChange={handleChordChange}
             />
           </div>
@@ -182,6 +205,14 @@ export default function App() {
           <ExportPanel settings={settings} sections={sections} chordData={chordData} />
         </div>
       </div>
+
+      {/* Template modal */}
+      {showTemplates && (
+        <TemplateSelector
+          onSelect={handleTemplateSelect}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
     </div>
   );
 }
